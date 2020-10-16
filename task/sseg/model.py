@@ -67,7 +67,7 @@ class DeepLab(pixelssl.model_template.TaskModel):
 class DeepLabV2(DeepLab):
     def __init__(self, args):
 
-        if self.args.backbone == 'resnet50':
+        if args.backbone == 'resnet50':
             self.pretrained_backbone_url = 'https://download.pytorch.org/models/resnet50-19c8e357.pth'
         elif args.backbone == 'resnet101':
             pretrained_backbone_url = 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'
@@ -89,7 +89,7 @@ class PSPNet(pixelssl.model_template.TaskModel):
         elif self.args.backbone == 'resnet101':
             self.pretrained_backbone_url = 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'
         elif args.backbone == 'resnet101-coco':
-            pretrained_backbone_url = 'http://vllab1.ucmerced.edu/~whung/adv-semi-seg/resnet101COCO-41f33a49.pth'
+            self.pretrained_backbone_url = 'http://vllab1.ucmerced.edu/~whung/adv-semi-seg/resnet101COCO-41f33a49.pth'
         else:
             pixelssl.log_err('PSPNet does not support the backbone: {0}\n'
                              'You can support it for PSPNet in the file \'task/sseg/model.py\'\n')

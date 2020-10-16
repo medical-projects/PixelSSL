@@ -55,22 +55,41 @@ class PixelShuffle(nn.Module):
 
 
 class _PSPModule(nn.Module):
-    def __init__(self, in_channels, bin_sizes):
+    def __init__(self, in_channels, bin_sizes, norm_layer):
         super(_PSPModule, self).__init__()
+
+        self.norm_layer = norm_layer
 
         out_channels = in_channels // len(bin_sizes)
         self.stages = nn.ModuleList([self._make_stages(in_channels, out_channels, b_s) for b_s in bin_sizes])
         self.bottleneck = nn.Sequential(
             nn.Conv2d(in_channels+(out_channels * len(bin_sizes)), out_channels, 
                                     kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
+            self.norm_layer(out_channels),
             nn.ReLU(inplace=True)
         )
 
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                self._init_conv(m)
+            elif isinstance(m, self.norm_layer):
+                self._init_norm(m)
+
+    def _init_conv(self, conv):
+        nn.init.kaiming_uniform_(
+            conv.weight, a=0, mode='fan_in', nonlinearity='relu')
+        if conv.bias is not None:
+            nn.init.constant_(conv.bias, 0)
+
+    def _init_norm(self, norm):
+        if norm.weight is not None:
+            nn.init.constant_(norm.weight, 1)
+            nn.init.constant_(norm.bias, 0)
+        
     def _make_stages(self, in_channels, out_channels, bin_sz):
         prior = nn.AdaptiveAvgPool2d(output_size=bin_sz)
         conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
-        bn = nn.BatchNorm2d(out_channels)
+        bn = self.norm_layer(out_channels)
         relu = nn.ReLU(inplace=True)
         return nn.Sequential(prior, conv, bn, relu)
     
@@ -89,12 +108,12 @@ class _PSPNet(nn.Module):
         super(_PSPNet, self).__init__()
 
         if sync_bn == True:
-            BatchNorm = pixelssl.SynchronizedBatchNorm2d
+            self.norm_layer = pixelssl.SynchronizedBatchNorm2d
         else:
-            BatchNorm = nn.BatchNorm2d
+            self.norm_layer = nn.BatchNorm2d
 
-        self.backbone = build_backbone(backbone, output_stride, BatchNorm, pretrained_backbone_url)
-        self.psp = _PSPModule(2048, bin_sizes=[1, 2, 3, 6])
+        self.backbone = build_backbone(backbone, output_stride, self.norm_layer, pretrained_backbone_url)
+        self.psp = _PSPModule(2048, bin_sizes=[1, 2, 3, 6], norm_layer=self.norm_layer)
         self.decoder = upsample(512, num_classes, upscale=8)
 
         if freeze_bn:
@@ -110,9 +129,7 @@ class _PSPNet(nn.Module):
 
     def freeze_bn(self):
         for m in self.modules():
-            if isinstance(m, pixelssl.SynchronizedBatchNorm2d):
-                m.eval()
-            elif isinstance(m, nn.BatchNorm2d):
+            if isinstance(m, self.norm_layer):
                 m.eval()
 
     def get_backbone_params(self):
