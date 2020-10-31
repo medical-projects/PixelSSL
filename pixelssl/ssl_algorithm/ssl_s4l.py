@@ -26,8 +26,8 @@ This implementation only supports the rotation-based self-supervised pretext tas
 
 def add_parser_arguments(parser):
     ssl_base.add_parser_arguments(parser)
-    parser.add_argument('--rotated-sup-scale', type=float, default=-1, help='task-supervised coefficient for rotated labeled data')
-    parser.add_argument('--rotation-scale', type=float, default=-1, help='rotation-based self-supervised coefficient')
+    parser.add_argument('--rotated-sup-scale', type=float, default=-1, help='ssls4l - task-supervised coefficient for rotated labeled data')
+    parser.add_argument('--rotation-scale', type=float, default=-1, help='ssls4l - rotation-based self-supervised coefficient')
 
 
 def ssl_s4l(args, model_dict, optimizer_dict, lrer_dict, criterion_dict, task_func):

@@ -40,7 +40,8 @@ The SSL algorithms and demo tasks supported by PixelSSL are summarized in the fo
 | MT [[1]](https://arxiv.org/abs/1703.01780) | v0.1.0 | Coming Soon |
 | AdvSSL [[2]](https://arxiv.org/abs/1802.07934) | v0.1.0 | Coming Soon |
 | S4L [[3]](https://arxiv.org/abs/1905.03670) | v0.1.1 | Coming Soon | 
-| GCT [[4]](https://arxiv.org/abs/2008.05258) | v0.1.0 | Coming Soon |
+| CCT [[4]](https://arxiv.org/abs/2003.09005) | v0.1.3 | Coming Soon |
+| GCT [[5]](https://arxiv.org/abs/2008.05258) | v0.1.0 | Coming Soon |
 
 
 [1] Mean Teachers are Better Role Models: Weight-Averaged Consistency Targets Improve Semi-Supervised Deep Learning Results  
@@ -52,7 +53,10 @@ The SSL algorithms and demo tasks supported by PixelSSL are summarized in the fo
 [3] S4L: Self-Supervised Semi-Supervised Learning  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Xiaohua Zhai, Avital Oliver, Alexander Kolesnikov, and Lucas Beyer. ICCV 2019.  
 
-[4] Guided Collaborative Training for Pixel-wise Semi-Supervised Learning  
+[4] Semi-Supervised Semantic Segmentation with Cross-Consistency Training  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yassine Ouali, Céline Hudelot, and Myriam Tami. CVPR 2020.
+
+[5] Guided Collaborative Training for Pixel-wise Semi-Supervised Learning  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Zhanghan Ke, Di Qiu, Kaican Li, Qiong Yan, and Rynson W.H. Lau. ECCV 2020.
 
 

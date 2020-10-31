@@ -19,8 +19,8 @@ The supported task model is [PSPNet]() with the [ResNet-101](https://arxiv.org/a
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | SupOnly | 61.90 | [67.06](https://drive.google.com/file/d/1CyrmM0AxMvYoY-YatmLFQf_j_Afi2bCS/view?usp=sharing) | 69.78 | 72.89 | [75.25](https://drive.google.com/file/d/1AGimIbPCT-Cv6ONx0WcrfCV9ONVKSZlt/view?usp=sharing) |
 | [MT](https://arxiv.org/abs/1703.01780) | - | [68.86](https://drive.google.com/file/d/1D30Ehvu3hzIoDCvbF9n0Wcba4QLe-MC-/view?usp=sharing) | - | - | - | 
-| [S4L](https://arxiv.org/abs/1905.03670) | - | - | - | - | - |
 | [AdvSSL](https://arxiv.org/abs/1802.07934) | - | [68.39](https://drive.google.com/file/d/1GyneqnoT3QOFdNT4tvoILv2A24k9LQba/view?usp=sharing) | - | - | - |
+| [CCT](https://arxiv.org/abs/2003.09005) | - | - | - | - | - |  
 | [GCT](https://arxiv.org/abs/2008.05258) | - | - | - | - | - |  
 
 **NOTE**: With more training epochs, the results of SSL experiments in the above table may be better.
