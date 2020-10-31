@@ -19,7 +19,7 @@ from . import ssl_base
 
 """ Implementation of pixel-wise Mean Teacher (MT)
     
-This method is proposed in paper: 
+This method is proposed in the paper: 
     'Mean Teachers are Better Role Models:
         Weight-Averaged Consistency Targets Improve Semi-Supervised Deep Learning Results'
 

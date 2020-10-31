@@ -17,7 +17,7 @@ from . import ssl_base
 
 """ Implementation of pixel-wise self-supervised semi-supervised learning (S4L)
     
-This method is proposed in paper: 
+This method is proposed in the paper: 
     'S4L: Self-Supervised Semi-Supervised Learning'
 
 This implementation only supports the rotation-based self-supervised pretext task.

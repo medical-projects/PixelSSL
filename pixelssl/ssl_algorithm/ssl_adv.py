@@ -18,7 +18,7 @@ from . import ssl_base
 
 """ Implementation of pixel-wise adversarial-based semi-supervised learning (AdvSSL)
     
-This method is proposed in paper: 
+This method is proposed in the paper: 
     'Adversarial Learning for Semi-supervised Semantic Segmentation'
 
 This implementation does not support the constraint named \'L_semi\' in the original paper 

@@ -12,11 +12,13 @@ The purpose of this project is to promote the research and application of semi-s
 
 As a result, the SSL algorithms integrated in PixelSSL are compatible with all task codes inherited from the given template. 
 
+In addition, PixelSSL provides the benchmarks for validating semi-supervised learning algorithms for some pixel-level tasks, which now include [semantic segmentation](task/sseg).
+
 <!-- This project includes the code of our ECCV 2020 paper [Guided Collaborative Training for Pixel-wise Semi-Supervised Learning](https://arxiv.org/abs/2008.05258) (GCT). -->
 
 ## News
 - **[Oct 28 2020] PixelSSL v0.1.2 is Released!**  
-  v0.1.2 supports [PSPNet](https://arxiv.org/abs/1612.01105) and its SSL results for semantic segmentation task [check [here](task/sseg)].
+  v0.1.2 supports [PSPNet](https://arxiv.org/abs/1612.01105) and its SSL results for semantic segmentation task (check [here](task/sseg)).
   
 - **[Sep 16 2020] PixelSSL v0.1.1 is Released!**  
   v0.1.1 supports a new semi-supervised learning algorihms ([S4L](https://arxiv.org/abs/1905.03670)) and fixes some bugs in the demo code of semantic segmentation task.
