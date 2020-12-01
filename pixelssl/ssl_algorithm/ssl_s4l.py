@@ -182,7 +182,7 @@ class SSLS4L(ssl_base._SSLBase):
                                 '  rotation-{3}\t=>\t'
                                 'rotation-loss: {meters[rotation_loss]:.6f}\t'
                                 'rotation-acc: {meters[rotation_acc]:.6f}\n'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
                 
             # visualization
             if self.args.visualize and idx % self.args.visual_freq == 0:
@@ -234,7 +234,7 @@ class SSLS4L(ssl_base._SSLBase):
                                 'task-loss: {meters[task_loss]:.6f}\n'
                                 '  rotation-{3}\t=>\t'
                                 'rotation-loss: {meters[rotation_loss]:.6f}\n'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
 
             # visualization
             if self.args.visualize and idx % self.args.visual_freq == 0:

@@ -286,7 +286,7 @@ class SSLCCT(ssl_base._SSLBase):
                                 '  task-{3}\t=>\t'
                                 'task-loss: {meters[task_loss]:.6f}\t'
                                 'cons-loss: {meters[cons_loss]:.6f}\n'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
 
             # visualization
             if self.args.visualize and idx % self.args.visual_freq == 0:
@@ -330,7 +330,7 @@ class SSLCCT(ssl_base._SSLBase):
                 logger.log_info('step: [{0}][{1}/{2}]\tbatch-time: {meters[batch_time]:.3f}\n'
                                 '  task-{3}\t=>\t'
                                 'task-loss: {meters[task_loss]:.6f}\t'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
 
             # visualization
             if self.args.visualize and idx % self.args.visual_freq == 0:

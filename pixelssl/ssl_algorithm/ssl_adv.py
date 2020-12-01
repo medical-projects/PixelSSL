@@ -256,7 +256,7 @@ class SSLADV(ssl_base._SSLBase):
                                 '  fc-discriminator\t=>\t'
                                 'fake-d-loss: {meters[fake_d_loss]:.6f}\t'
                                 'real-d-loss: {meters[real_d_loss]:.6f}\n'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
                     
             # visualization
             if self.args.visualize and idx % self.args.visual_freq == 0:
@@ -335,7 +335,7 @@ class SSLADV(ssl_base._SSLBase):
                                 '  fc-discriminator\t=>\t'
                                 'fake-d-loss: {meters[fake_d_loss]:.6f}\t'
                                 'real-d-loss: {meters[real_d_loss]:.6f}\n'
-                                .format(epoch, idx, len(data_loader), self.args.task, meters=self.meters))
+                                .format(epoch + 1, idx, len(data_loader), self.args.task, meters=self.meters))
 
             if self.args.visualize and idx % self.args.visual_freq == 0:
                 self._visualize(epoch, idx, False, 
