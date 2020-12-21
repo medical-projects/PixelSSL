@@ -21,8 +21,9 @@ config = collections.OrderedDict(
         ('ssl_algorithm', pixelssl.SSL_CUTMIX),
 
         ('cons_type', 'mse'),
-        ('cons_scale', 1.0),
-        ('cons_rampup_epochs', 5),
+        ('cons_scale', 20.0),
+        ('cons_rampup_epochs', 0),
+        ('cons_threshold', 0.97),
 
         ('ema_decay', 0.99),
         ('mask_prop_range', (0.5, 0.5)),
@@ -71,8 +72,8 @@ config = collections.OrderedDict(
 
         # arguments - training details
         ('epochs', 45),
-        ('batch_size', 4),
-        ('unlabeled_batch_size', 2), 
+        ('batch_size', 6),
+        ('unlabeled_batch_size', 4), 
 
     ]
 )

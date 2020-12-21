@@ -26,6 +26,7 @@ This method is proposed in paper:
 
 MT based with mse cons and sigmoid rampup
 only mixcut
+only segmentation since cons-threshold
 
 argument: 
     cos_scale = 1
@@ -42,6 +43,8 @@ def add_parser_arguments(parser):
     parser.add_argument('--cons-type', type=str, default='mse', choices=['mse'], help='sslcutmix - consistency constraint type [mse, ]')
     parser.add_argument('--cons-scale', type=float, default=-1, help='sslcutmix - consistency constraint coefficient')
     parser.add_argument('--cons-rampup-epochs', type=int, default=-1, help='sslcutmix - ramp-up epochs of conistency constraint')
+    parser.add_argument('--cons-threshold', type=float, default=-1, 
+                        help='sslcutmix - the confidence threshold of the teacher model that used to calculate the consistency constraint')
 
     parser.add_argument('--ema-decay', type=float, default=0.99, help='sslcutmix - EMA coefficient of teacher model')
     parser.add_argument('--mask-prop-range', type=cmd.str2floatlist, default='(0.5, 0.5)', help='sslcutmix - mixing ratio range')
@@ -66,7 +69,7 @@ def ssl_cutmix(args, model_dict, optimizer_dict, lrer_dict, criterion_dict, task
 
 class SSLCUTMIX(ssl_base._SSLBase):
     NAME = 'ssl_cutmix'
-    SUPPORTED_TASK_TYPES = [REGRESSION, CLASSIFICATION]
+    SUPPORTED_TASK_TYPES = [CLASSIFICATION]
 
     def __init__(self, args):
         super(SSLCUTMIX, self).__init__(args)
@@ -80,15 +83,19 @@ class SSLCUTMIX(ssl_base._SSLBase):
         self.mask_generator = None
 
         # check SSL arguments
-        if not self.args.labeled_batch_size == self.args.unlabeled_batch_size:
-            logger.log_err('This implementation of SSL_CUTMIX requires the same number of ' 
-                           'labeled and unlabeled samples in a mini-batch\n')
+        if not self.args.unlabeled_batch_size > 2 or not self.args.unlabeled_batch_size % 2 == 0:
+            logger.log_err('This implementation of SSL_CUTMIX requires the unlabeled batch size: \n'
+                           '    1. larger than 2 \n'
+                           '    2. is divisible by 2 \n')
         if self.args.cons_scale < 0:
             logger.log_err('The argument - cons_scale - is not set (or invalid)\n'
                             'Please set - cons_scale >= 0 - for training\n')
         if self.args.cons_rampup_epochs < 0:
             logger.log_err('The argument - cons_rampup_epochs - is not set (or invalid)\n'
                            'Please set - cons_rampup_epochs >= 0 - for training\n')
+        if self.args.cons_threshold < 0 or self.args.cons_threshold > 1:
+            logger.log_err('The argument - cons_threshold - is not set (or invalid)\n'
+                           'Please set - 0 <= cons_threshold < 1 - for training\n')
 
     def _build(self, model_funcs, optimizer_funcs, lrer_funcs, criterion_funcs, task_func):
         self.task_func = task_func
@@ -138,7 +145,7 @@ class SSLCUTMIX(ssl_base._SSLBase):
             timer = time.time()
 
             # 'inp' and 'gt' are tuples
-            inp, gt, mix_inp, mix_mask = self._batch_prehandle(inp, gt, True)
+            inp, gt, mix_u_inp, mix_u_mask = self._batch_prehandle(inp, gt, True)
             if len(inp) > 1 and idx == 0:
                 self._inp_warn()
             if len(gt) > 1 and idx == 0:
@@ -170,33 +177,42 @@ class SSLCUTMIX(ssl_base._SSLBase):
             # -------------------------------------------------
             # For Unlabeled Samples
             # -------------------------------------------------
+            u_inp = func.split_tensor_tuple(inp, lbs, self.args.batch_size)
+
             # forward the original samples by the teacher model
             with torch.no_grad():
-                t_resulter, t_debugger = self.t_model.forward(inp)
-            if not 'pred' in t_resulter.keys() or not 'activated_pred' in t_resulter.keys():
+                u_t_resulter, u_t_debugger = self.t_model.forward(u_inp)
+            if not 'pred' in u_t_resulter.keys() or not 'activated_pred' in u_t_resulter.keys():
                 self._pred_err()
-            t_activated_pred = tool.dict_value(t_resulter, 'activated_pred')
+            u_t_activated_pred = tool.dict_value(u_t_resulter, 'activated_pred')
 
-            # mix the activated pred from the teacher model as pseudo-gt
-            l_t_activated_pred = func.split_tensor_tuple(t_activated_pred, 0, lbs)
-            u_t_activated_pred = func.split_tensor_tuple(t_activated_pred, lbs, self.args.batch_size) 
-            
-            mix_t_activated_pred = []
-            for lp, up in zip(l_t_activated_pred, u_t_activated_pred):
-                mp = mix_mask * up + (1 - mix_mask) * lp
-                mix_t_activated_pred.append(mp.detach())
-            mix_t_activated_pred = tuple(mix_t_activated_pred)
+            # mix the activated pred from the teacher model as the pseudo gt
+            u_t_activated_pred_1 = func.split_tensor_tuple(u_t_activated_pred, 0, int(ubs / 2)) 
+            u_t_activated_pred_2 = func.split_tensor_tuple(u_t_activated_pred, int(ubs / 2), ubs) 
+
+            mix_u_t_activated_pred = []
+            mix_u_t_confidence = []
+            for up_1, up_2 in zip(u_t_activated_pred_1, u_t_activated_pred_2):
+                mp = mix_u_mask * up_1 + (1 - mix_u_mask) * up_2
+                mix_u_t_activated_pred.append(mp.detach())
+
+                # NOTE: here we just follow the official code of CutMix to calculate the confidence
+                #       but it is odd that all the samples use the same confidence (mean confidence)
+                u_t_confidence = (mp.max(dim=1)[0] > self.args.cons_threshold).float().mean()
+                mix_u_t_confidence.append(u_t_confidence.detach())
+
+            mix_u_t_activated_pred = tuple(mix_u_t_activated_pred)
 
             # forward the mixed samples by the student model
-            s_resulter, s_debugger = self.s_model.forward(mix_inp)
-            if not 'pred' in s_resulter.keys() or not 'activated_pred' in s_resulter.keys():
+            u_s_resulter, u_s_debugger = self.s_model.forward(mix_u_inp)
+            if not 'pred' in u_s_resulter.keys() or not 'activated_pred' in u_s_resulter.keys():
                 self._pred_err()
-            mix_s_activated_pred = tool.dict_value(s_resulter, 'activated_pred')
+            mix_u_s_activated_pred = tool.dict_value(u_s_resulter, 'activated_pred')
 
             # calculate the consistency constraint
             cons_loss = 0
-            for msap, mtap in zip(mix_s_activated_pred, mix_t_activated_pred):
-                cons_loss += torch.mean(self.cons_criterion(msap, mtap))
+            for msap, mtap, confidence in zip(mix_u_s_activated_pred, mix_u_t_activated_pred, mix_u_t_confidence):
+                cons_loss += torch.mean(self.cons_criterion(msap, mtap)) * confidence
             cons_loss = cons_rampup_scale * self.args.cons_scale * torch.mean(cons_loss)
             self.meters.update('cons_loss', cons_loss.data)
 
@@ -224,10 +240,10 @@ class SSLCUTMIX(ssl_base._SSLBase):
                                 func.split_tensor_tuple(l_inp, 0, 1, reduce_dim=True),
                                 func.split_tensor_tuple(l_s_activated_pred, 0, 1, reduce_dim=True),
                                 func.split_tensor_tuple(l_gt, 0, 1, reduce_dim=True),
-                                func.split_tensor_tuple(mix_inp, 0, 1, reduce_dim=True),
-                                func.split_tensor_tuple(mix_s_activated_pred, 0, 1, reduce_dim=True),
-                                func.split_tensor_tuple(mix_t_activated_pred, 0, 1, reduce_dim=True),
-                                mix_mask[0])
+                                func.split_tensor_tuple(mix_u_inp, 0, 1, reduce_dim=True),
+                                func.split_tensor_tuple(mix_u_s_activated_pred, 0, 1, reduce_dim=True),
+                                func.split_tensor_tuple(mix_u_t_activated_pred, 0, 1, reduce_dim=True),
+                                mix_u_mask[0])
 
             # update iteration-based lrers
             if not self.args.is_epoch_lrer:
@@ -349,21 +365,21 @@ class SSLCUTMIX(ssl_base._SSLBase):
     # -------------------------------------------------------------------------------------------
 
     def _visualize(self, epoch, idx, is_train, l_inp, l_pred, l_gt, 
-                   m_inp=None, m_s_pred=None, m_t_pred=None, mix_mask=None):
+                   m_u_inp=None, m_u_s_pred=None, m_u_t_pred=None, mix_u_mask=None):
         
         visualize_path = self.args.visual_train_path if is_train else self.args.visual_val_path
         out_path = os.path.join(visualize_path, '{0}_{1}'.format(epoch, idx))
         
         self.task_func.visualize(out_path, id_str='s-labeled', inp=l_inp, pred=l_pred, gt=l_gt)
         
-        if m_inp is not None and m_s_pred is not None:
-            self.task_func.visualize(out_path, id_str='s-mixed', inp=m_inp, pred=m_s_pred)
-        if m_inp is not None and m_t_pred is not None:
-            self.task_func.visualize(out_path, id_str='t-mixed', inp=m_inp, pred=m_t_pred)
+        if m_u_inp is not None and m_u_s_pred is not None:
+            self.task_func.visualize(out_path, id_str='s-mixed', inp=m_u_inp, pred=m_u_s_pred)
+        if m_u_inp is not None and m_u_t_pred is not None:
+            self.task_func.visualize(out_path, id_str='t-mixed', inp=m_u_inp, pred=m_u_t_pred)
         
-        if mix_mask is not None:
-            mix_mask = mix_mask[0].data.cpu().numpy()
-            Image.fromarray((mix_mask * 255).astype('uint8'), mode='L').save(out_path + '_m-mask.png')
+        if mix_u_mask is not None:
+            mix_u_mask = mix_u_mask[0].data.cpu().numpy()
+            Image.fromarray((mix_u_mask * 255).astype('uint8'), mode='L').save(out_path + '_m-mask.png')
 
     def _batch_prehandle(self, inp, gt, is_train):
         # add extra data augmentation process here if necessary
@@ -378,14 +394,15 @@ class SSLCUTMIX(ssl_base._SSLBase):
             gt_var.append(Variable(g).cuda())
         gt = tuple(gt_var)
 
-        mix_inp = None
-        mix_mask = None
+        mix_u_inp = None
+        mix_u_mask = None
 
         # -------------------------------------------------
         # Operations for CUTMIX
         # -------------------------------------------------
         if is_train:
             lbs = self.args.labeled_batch_size
+            ubs = self.args.unlabeled_batch_size
 
             # check the shape of input and gt
             # this implementation of CUTMIX supports multiple input and gt
@@ -402,20 +419,21 @@ class SSLCUTMIX(ssl_base._SSLBase):
             # generate the mask for mixing samples
             # NOTE: different from the official code, in this implementation,  
             #       we mix the labeled samples and the unlabeled samples in each mini-batch
-            mix_mask = self.mask_generator.produce(lbs, sample_shape)
-            mix_mask = torch.tensor(mix_mask).cuda()
+            mix_u_mask = self.mask_generator.produce(int(ubs / 2), sample_shape)
+            mix_u_mask = torch.tensor(mix_u_mask).cuda()
 
             # mix the labeled and unlabeled samples
-            l_inp = func.split_tensor_tuple(inp, 0, lbs)
-            u_inp = func.split_tensor_tuple(inp, lbs, self.args.batch_size)
+            # l_inp = func.split_tensor_tuple(inp, 0, lbs)
+            u_inp_1 = func.split_tensor_tuple(inp, lbs, int(lbs + ubs / 2))
+            u_inp_2 = func.split_tensor_tuple(inp, int(lbs + ubs / 2), self.args.batch_size)
 
-            mix_inp = []
-            for li, ui in zip(l_inp, u_inp):
-                mi = mix_mask * ui + (1 - mix_mask) * li
-                mix_inp.append(mi)
-            mix_inp = tuple(mix_inp)
+            mix_u_inp = []
+            for ui_1, ui_2 in zip(u_inp_1, u_inp_2):
+                mi = mix_u_mask * ui_1 + (1 - mix_u_mask) * ui_2
+                mix_u_inp.append(mi)
+            mix_u_inp = tuple(mix_u_inp)
 
-        return inp, gt, mix_inp, mix_mask
+        return inp, gt, mix_u_inp, mix_u_mask
 
     def _update_ema_variables(self, s_model, t_model, ema_decay, cur_step):
         # update the teacher model by exponential moving average
