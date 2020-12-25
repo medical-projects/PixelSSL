@@ -24,7 +24,7 @@ from . import ssl_base
 This method is proposed in the paper:
     'Semi-Supervised Semantic Segmentation with Cross-Consistency Training' 
 
-This implementation tries to follow the code from: https://github.com/yassouali/CCT
+This implementation follows the code from: https://github.com/yassouali/CCT
 Since the code of the auxiliary decoders are adapted from above repository, they may 
 be only suitable for pixel-wise classification. 
 For the semantic segmentation task, we only experimented with CCT under PSPNet.
@@ -63,6 +63,7 @@ def add_parser_arguments(parser):
     parser.add_argument('--fn-dec-uniform', type=float, default=0.3, help='sslcct - the argument \'uniform\' for \'F-Noise\' auxiliary decoders')
 
     parser.add_argument('--fd-dec-num', type=int, default=0, help='sslcct - number of the \'F-Drop\' auxiliary decoders')
+
 
 def ssl_cct(args, model_dict, optimizer_dict, lrer_dict, criterion_dict, task_func):
     if not len(model_dict) == len(optimizer_dict) == len(lrer_dict) == len(criterion_dict) == 1:
@@ -411,7 +412,7 @@ class SSLCCT(ssl_base._SSLBase):
                         'supports more than one (pred & gt) pairs\n')
 
     def _algorithm_warn(self):
-        logger.log_warn('This SSL_CCT algorithm reproducts the SSL algorithm from paper:\n'
+        logger.log_warn('This SSL_CCT algorithm reproduces the SSL algorithm from the paper:\n'
                         '  \'Semi-Supervised Semantic Segmentation with Cross-Consistency Training\'\n'
                         'The code of the auxiliary decoders are adapted from the official repository:\n'
                         '   https://github.com/yassouali/CCT \n'

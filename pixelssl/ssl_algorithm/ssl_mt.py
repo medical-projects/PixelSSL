@@ -363,7 +363,7 @@ class SSLMT(ssl_base._SSLBase):
             t_param.data.mul_(ema_decay).add_(1 - ema_decay, s_param.data)
 
     def _algorithm_warn(self):
-        logger.log_warn('This SSL_MT algorithm reproducts the SSL algorithm from paper:\n'
+        logger.log_warn('This SSL_MT algorithm reproduces the SSL algorithm from the paper:\n'
                         '  \'Mean Teachers are Better Role Models: Weight-Averaged Consistency Targets '
                         'Improve Semi-Supervised Deep Learning Results\'\n'
                         'The main differences between this implementation and the original paper are:\n'

@@ -371,7 +371,7 @@ class SSLS4L(ssl_base._SSLBase):
                         'supports other formants (not 4-dim tensor) of the ground truth\n')
 
     def _algorithm_warn(self):
-        logger.log_warn('This SSL_S4L algorithm reproducts the SSL algorithm from paper:\n'
+        logger.log_warn('This SSL_S4L algorithm reproduces the SSL algorithm from the paper:\n'
                         '  \'S4L: Self-Supervised Semi-Supervised Learning\'\n'
                         'The main differences between this implementation and the original paper are:\n'
                         '  (1) This is an implementation for pixel-wise vision tasks\n'

@@ -29,8 +29,8 @@ config = collections.OrderedDict(
         ('mask_prop_range', (0.5, 0.5)),
 
         # arguments - exp
-        # ('resume', 'pretrained/pspnet_pascalvoc_1-8_sslcutmix.ckpt'),
-        # ('validation', True),
+        ('resume', 'pretrained/pspnet_pascalvoc_1-8_sslcutmix.ckpt'),
+        ('validation', True),
         
         ('out_path', 'result'),
         
